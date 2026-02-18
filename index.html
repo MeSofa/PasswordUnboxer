@@ -95,7 +95,6 @@
             color: #000; cursor: pointer; font-size: 14px; font-weight: bold; margin-top: 20px;
         }
 
-        /* Makes the close button link feel like a real XP button hover */
     .window .title-bar a:hover div {
     filter: brightness(1.2);
         }
@@ -206,10 +205,10 @@
             o.start(); o.stop(audioCtx.currentTime + 0.04);
         }
 
-        /**
-         * GENERATOR LOGIC
-         * Curated list for Gold, random construction for others.
-         */
+        
+         // GENERATOR LOGIC
+         // Curated list for Gold, random construction for all the other stuff.
+         
         function genPass(rarity) {
             if (rarity === "Gold") return goldList[Math.floor(Math.random() * goldList.length)];
             const syms = ['!', '@', '#', '$', '%']; const sym = syms[Math.floor(Math.random()*5)];
@@ -245,7 +244,7 @@
                 const rarity = r < 2 ? "Gold" : r < 6 ? "Red" : r < 16 ? "Pink" : r < 36 ? "Purple" : "Blue";
                 const card = document.createElement('div');
                 card.className = `card ${rarity}`;
-                // Map rarities to unique retro icons
+                // Map rarities to icons
                 const iconMap = {
                     'Blue': '💾',   // Floppy Disk (Common)
                     'Purple': '📁', // Folder (Restricted)
@@ -275,7 +274,7 @@
 
             /**
              * FRAME-BY-FRAME SYNC LOOP
-             * Ensures movement and sound are perfectly aligned.
+             * makes sure movement and sound are perfectly aligned.
              */
             function frame(now) {
                 const elapsed = now - startTime;
