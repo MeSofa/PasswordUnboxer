@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Windows Password Installation Wizard - Stabilized Edition</title>
+    <style>
+        :root {
+            --xp-blue: #245edb; --xp-grey: #ece9d8;
+            --blue: #0000ff; --purple: #800080; --pink: #ff00ff; --red: #ff0000; --gold: #d4af37;
+        }
+
+        body {
+            background: #3a6ea5 url('https://upload.wikimedia.org/wikipedia/en/2/27/Bliss_%28Windows_XP%29.png') no-repeat center center fixed;
+            background-size: cover; font-family: 'Tahoma', sans-serif;
+            display: flex; align-items: center; justify-content: center;
+            height: 100vh; margin: 0; overflow: hidden;
+        }
+
+        #flash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; pointer-events: none; z-index: 2000; }
+
+        .window {
+            width: 850px; background: var(--xp-grey); border: 3px solid var(--xp-blue);
+            border-top-left-radius: 8px; border-top-right-radius: 8px;
+            box-shadow: 4px 4px 20px rgba(0,0,0,0.6); position: relative;
+            transform-origin: center; transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .title-bar {
+            background: linear-gradient(to bottom, #245edb 0%, #3f8cf3 9%, #245edb 18%, #245edb 92%, #193cbb 100%);
+            padding: 5px 10px; display: flex; justify-content: space-between; color: white;
+            font-weight: bold; text-shadow: 1px 1px #000;
+        }
+
+        .window-body { padding: 25px; display: flex; flex-direction: column; align-items: center; }
+
+        .status-display {
+            width: 95%; background: white; border: 2px inset #aaa; padding: 15px;
+            margin-bottom: 20px; font-family: 'Courier New', monospace; font-size: 2.2rem;
+            text-align: center; min-height: 45px; transition: transform 0.2s;
+        }
+
+        .system-log {
+            width: 95%; height: 25px; background: #eee; border: 1px solid #999;
+            margin-top: 15px; padding: 5px; font-size: 11px; color: #555;
+            display: flex; align-items: center;
+        }
+
+        .case-container {
+            position: relative; width: 800px; height: 180px;
+            background: #fff; border: 2px inset #aaa; overflow: hidden;
+        }
+
+        .needle {
+            position: absolute; left: 50%; top: 0; bottom: 0;
+            width: 3px; background: #ff0000; z-index: 100;
+            box-shadow: 0 0 5px red; transform: translateX(-50%);
+        }
+
+        .reel { display: flex; width: max-content; align-items: center; height: 100%; will-change: transform; }
+
+        .card {
+            width: 150px; height: 150px; margin: 0 5px; background: #f5f5f5;
+            border: 1px solid #ccc; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; flex-shrink: 0;
+            box-sizing: border-box;
+        }
+        .Blue { border-bottom: 8px solid var(--blue); }
+        .Purple { border-bottom: 8px solid var(--purple); }
+        .Pink { border-bottom: 8px solid var(--pink); }
+        .Red { border-bottom: 8px solid var(--red); }
+        .Gold { border-bottom: 8px solid var(--gold); background: #ffffef; }
+
+        .icon { font-size: 50px; }
+
+        /* WINNER ANIMATIONS */
+        /* Red Shake: Now limited to 1 second via JS */
+        @keyframes windowShake {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(-12px, -8px); }
+            75% { transform: translate(12px, 8px); }
+        }
+        .shake-active { animation: windowShake 0.1s ease-in-out infinite; }
+
+        /* Pink Bounce */
+        @keyframes bounce { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-20px);} }
+        .bounce-active { animation: bounce 0.4s ease-in-out 3; }
+
+        /* Gold Glow */
+        @keyframes goldGlow { 0% { border-color: gold; box-shadow: 0 0 10px gold; } 50% { border-color: white; box-shadow: 0 0 40px gold; } 100% { border-color: gold; box-shadow: 0 0 10px gold; } }
+        .gold-active { animation: goldGlow 0.3s infinite; }
+
+        .xp-button {
+            padding: 8px 25px; border: 1.5px solid #003c74; border-radius: 3px;
+            background: linear-gradient(to bottom, #fff 0%, #ece9d8 100%);
+            color: #000; cursor: pointer; font-size: 14px; font-weight: bold; margin-top: 20px;
+        }
+
+        /* Makes the close button link feel like a real XP button hover */
+    .window .title-bar a:hover div {
+    filter: brightness(1.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="flash"></div>
+
+    <div class="window" id="mainWin">
+        <div class="title-bar">
+            <span>Password Wizard v1.1</span>
+            <div style="display:flex; gap:2px">
+                <div style="width:20px; height:20px; background:#3f8cf3; border:1px solid #fff; text-align:center; cursor:pointer;">_</div>
+                <a href="https://yourwebsite.com" style="text-decoration:none;">
+    <div style="width:20px; height:20px; background:linear-gradient(135deg, #e7643d, #c33100); border:1px solid #fff; text-align:center; line-height:16px; color:white; font-weight:bold; cursor:pointer;">X</div>
+</a>
+            </div>
+        </div>
+        <div class="window-body">
+            <div class="status-display" id="status">System Ready</div>
+            
+            <div class="case-container">
+                <div class="needle"></div>
+                <div class="reel" id="reel"></div>
+            </div>
+
+            <div class="system-log" id="logBox">Status: Awaiting Start Command...</div>
+
+            <div style="display:flex; gap:10px">
+                <button class="xp-button" id="spinBtn" onclick="runSpin()">Generate Password</button>
+                <button class="xp-button" id="copyBtn" style="display:none" onclick="copyPass()">Copy</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // WORD POOLS & CUSTOM GOLD LIST
+        const pools = {
+            Blue: ["fire", "water", "tree", "book", "jump", "road", "hand", "moon", "fish", "bird", "lamp", "desk", "wind", "salt", "milk", "door", "park", "song", "bell", "ship", "farm", "gold", "bank", "rain", "cool"],
+            Purple: ["glimmer", "factor", "rocket", "pocket", "winter", "silver", "garden", "hammer", "velvet", "beacon", "danger", "window", "ticket", "spirit", "coffee", "yellow", "palace", "market", "legend", "frozen", "butter", "sailor", "harbor", "cosmic", "bullet"],
+            Pink: ["phantom", "thunder", "crimson", "crystal", "whiskey", "voltage", "obsidian", "journey", "dynamic", "fragile", "keyword", "nomadic", "sapphire", "triumph", "venture", "archive", "blazing", "cryptic", "echoing", "glacier", "horizon", "ivory", "kingdom", "lunar", "mystic"],
+            Red: ["quantum", "eclipse", "nemesis", "pyramid", "sphinx", "warlord", "zenith", "abyss", "bastion", "caldera", "dervish", "entropy", "fractal", "goliath", "hallow", "inferno", "javelin", "kronos", "labyrinth", "maelstrom", "nebula", "oracle", "pulsar", "quixotic", "ragnarok"]
+        };
+
+        const goldList = ["browser@HISTORY@69", "password!ADMIN!11", "gluten@FREE@404", "rare!LOOT!01", "brain%ROT%67","gatekeep$GASLIGHT$girlboss00","touch#GRASS#22","gyatt!DAMN!83","yap@SESH@67","goon%CAVE%09","canon#EVENT#12","goblin!MODE!33","rent$FREE$99",];
+        const logMessages = ["Bypassing firewall...", "Optimizing entropy...", "Checking registry...", "Downloading more RAM...", "Encrypting secret sauce...","Reticulating Splines...","Also try Project Zomboid!","Buying Debuff Remover...","Dreaming of electric sheep...","MacOS Contains a built-in screen reader","For the Djinn!!!!",];
+
+        // Audio initialization
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        /**
+         * UNIQUE SFX PER TIER
+         * Generates specific tones using OscillatorNodes
+         */
+        function playWinSfx(rarity) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+
+            switch(rarity) {
+                case 'Blue': // High Blip
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+                    break;
+                case 'Purple': // Double Tone
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+                    setTimeout(() => {
+                        const osc2 = audioCtx.createOscillator(); const gain2 = audioCtx.createGain();
+                        osc2.frequency.setValueAtTime(450, audioCtx.currentTime);
+                        osc2.connect(gain2); gain2.connect(audioCtx.destination);
+                        osc2.start(); osc2.stop(audioCtx.currentTime + 0.15);
+                    }, 100);
+                    break;
+                case 'Pink': // Synth Rise
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.5);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+                    break;
+                case 'Red': // Low Sawtooth Thud
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.6);
+                    break;
+                case 'Gold': // Harmony Fanfare
+                    [261, 329, 392, 523].forEach((f, i) => {
+                        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+                        o.frequency.setValueAtTime(f, audioCtx.currentTime + i*0.1);
+                        g.gain.setValueAtTime(0.05, audioCtx.currentTime + i*0.1);
+                        o.connect(g); g.connect(audioCtx.destination);
+                        o.start(audioCtx.currentTime + i*0.1); o.stop(audioCtx.currentTime + 1.2);
+                    });
+                    break;
+            }
+        }
+
+        // Ticking sound for individual cards
+        function playTick() {
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o.frequency.setValueAtTime(120, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            o.connect(g); g.connect(audioCtx.destination);
+            o.start(); o.stop(audioCtx.currentTime + 0.04);
+        }
+
+        /**
+         * GENERATOR LOGIC
+         * Curated list for Gold, random construction for others.
+         */
+        function genPass(rarity) {
+            if (rarity === "Gold") return goldList[Math.floor(Math.random() * goldList.length)];
+            const syms = ['!', '@', '#', '$', '%']; const sym = syms[Math.floor(Math.random()*5)];
+            const pool = pools[rarity]; let w1 = pool[Math.floor(Math.random()*pool.length)];
+            let w2 = pool[Math.floor(Math.random()*pool.length)];
+            while(w1 === w2) w2 = pool[Math.floor(Math.random()*pool.length)];
+            return `${w1.toLowerCase()}${sym}${w2.toUpperCase()}${sym}${Math.floor(Math.random()*90+10)}`;
+        }
+
+        function runSpin() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const reel = document.getElementById('reel');
+            const win = document.getElementById('mainWin');
+            const status = document.getElementById('status');
+            const logBox = document.getElementById('logBox');
+            const btn = document.getElementById('spinBtn');
+            const copy = document.getElementById('copyBtn');
+
+            // RESET VISUALS
+            btn.disabled = true; copy.style.display = 'none';
+            status.innerText = "Analyzing Entropy..."; status.style.color = "black";
+            status.classList.remove('bounce-active'); 
+            win.classList.remove('shake-active', 'gold-active');
+            win.style.borderColor = 'var(--xp-blue)';
+            win.style.boxShadow = '4px 4px 20px rgba(0,0,0,0.6)';
+            reel.innerHTML = '';
+
+            logBox.innerText = "Status: " + logMessages[Math.floor(Math.random() * logMessages.length)];
+
+            // POPULATE REEL (75 Items)
+            for (let i = 0; i < 75; i++) {
+                const r = Math.random() * 100;
+                const rarity = r < 2 ? "Gold" : r < 6 ? "Red" : r < 16 ? "Pink" : r < 36 ? "Purple" : "Blue";
+                const card = document.createElement('div');
+                card.className = `card ${rarity}`;
+                // Map rarities to unique retro icons
+                const iconMap = {
+                    'Blue': '💾',   // Floppy Disk (Common)
+                    'Purple': '📁', // Folder (Restricted)
+                    'Pink': '💿',   // CD-ROM (Classified)
+                    'Red': '💻',    // My Computer (Covert)
+                    'Gold': '🔑'    // System Key (Exceedingly Rare)
+                };
+
+                // Update the card HTML using the map
+                card.innerHTML = `
+                    <div class="icon">${iconMap[rarity]}</div>
+                    <div style="font-size:10px; font-weight:bold; color:#555;">${rarity.toUpperCase()}</div>
+                `;
+                                card.dataset.pass = genPass(rarity);
+                                card.dataset.rarity = rarity;
+                                reel.appendChild(card);
+                            }
+
+            // DURATION (5s - 15s)
+            const duration = (Math.random() * 10 + 5) * 1000; 
+            const cardWidth = 160; const winnerIdx = 65; 
+            const targetX = (winnerIdx * cardWidth) - 400 + 80 + (Math.random() * 40 - 20);
+
+            let lastTickItem = 0;
+            let animationComplete = false;
+            const startTime = performance.now();
+
+            /**
+             * FRAME-BY-FRAME SYNC LOOP
+             * Ensures movement and sound are perfectly aligned.
+             */
+            function frame(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 4); // Quartic Ease-Out
+                const currentX = targetX * eased;
+
+                reel.style.transform = `translateX(-${currentX}px)`;
+
+                const currentItemIdx = Math.floor((currentX + 80) / 160);
+                if (currentItemIdx > lastTickItem) {
+                    playTick();
+                    lastTickItem = currentItemIdx;
+                }
+
+                // Snap finish threshold
+                if (progress < 1 && (targetX - currentX) > 0.5) {
+                    requestAnimationFrame(frame);
+                } else if (!animationComplete) {
+                    animationComplete = true;
+                    reel.style.transform = `translateX(-${targetX}px)`;
+                    
+                    const winCard = reel.children[winnerIdx];
+                    const rarity = winCard.dataset.rarity;
+                    
+                    status.innerText = winCard.dataset.pass;
+                    status.style.color = `var(--${rarity.toLowerCase()})`;
+                    playWinSfx(rarity);
+
+                    // TRIGGER EFFECTS BASED ON RARITY
+                    if (rarity === "Blue") {
+                        win.style.borderColor = "var(--blue)";
+                        win.style.boxShadow = "0 0 15px var(--blue)";
+                    }
+                    if (rarity === "Purple") {
+                        win.style.borderColor = "var(--purple)";
+                        win.style.boxShadow = "0 0 15px var(--purple)";
+                    }
+                    if (rarity === "Pink") {
+                        status.classList.add('bounce-active');
+                    }
+                    if (rarity === "Red") {
+                        win.classList.add('shake-active');
+                        // STOP SHAKING AFTER 1 SECOND so the user can actually read the password
+                        setTimeout(() => {
+                            win.classList.remove('shake-active');
+                            win.style.borderColor = "var(--red)";
+                        }, 1000);
+                    }
+                    if (rarity === "Gold") {
+                        win.classList.add('gold-active');
+                        document.getElementById('flash').style.opacity = "0.7";
+                        setTimeout(() => document.getElementById('flash').style.opacity = "0", 300);
+                    }
+
+                    logBox.innerText = "Status: Installation Complete.";
+                    copy.style.display = 'block'; btn.disabled = false;
+                }
+            }
+            requestAnimationFrame(frame);
+        }
+
+        function copyPass() {
+            navigator.clipboard.writeText(document.getElementById('status').innerText);
+            alert("Wizard: Data successfully written to memory address.");
+        }
+    </script>
+</body>
+</html>
